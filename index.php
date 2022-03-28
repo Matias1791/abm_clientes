@@ -41,7 +41,7 @@ if(file_exists("archivo.txt")){
     $nombre = trim($_POST["txtNombre"]);
     $telefono = trim($_POST["txtTelefono"]);
     $correo = trim($_POST["txtCorreo"]);
-    $nombreImagen = "";
+    $imagen = "";
   
     if($_FILES["archivo"]["error"] === UPLOAD_ERR_OK){
 
@@ -49,8 +49,8 @@ if(file_exists("archivo.txt")){
         $archivo_tmp = $_FILES["archivo"]["tmp_name"];
         $nombreArchivo = $_FILES["archivo"]["name"];
         $extension = pathinfo($nombreArchivo, PATHINFO_EXTENSION);
-        $nombreImagen = "$nombreAleatorio.$extension";
-        move_uploaded_file($archivo_tmp, "imagenes/$nombreImagen");
+        $imagen = "$nombreAleatorio.$extension";
+        move_uploaded_file($archivo_tmp, "imagenes/$imagen");
 
       }
   
@@ -70,7 +70,7 @@ if(file_exists("archivo.txt")){
         
         if($_FILES["archivo"]["error"] !== UPLOAD_ERR_OK){
 
-          $nombreImagen = $imagenAnterior;
+          $imagen = $imagenAnterior;
 
         }
         
@@ -79,7 +79,7 @@ if(file_exists("archivo.txt")){
           "nombre" => $nombre,
           "telefono" => $telefono,
           "correo" => $correo,
-          "imagen" => $nombreImagen
+          "imagen" => $imagen
           );
 
           $aMensaje = ["mensaje" => "Cliente modificado correctamente", "codigo" => "primary"];
@@ -92,7 +92,7 @@ if(file_exists("archivo.txt")){
           "nombre" => $nombre,
           "telefono" => $telefono,
           "correo" => $correo,
-          "imagen" => $nombreImagen
+          "imagen" => $imagen
           );
 
           $aMensaje = ["mensaje" => "¡El cliente ha sido guardado correctamente!", "codigo" => "success"];
