@@ -4,79 +4,106 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 if(file_exists("archivo.txt")){
-    $strJson = file_get_contents("archivo.txt");
-    $aClientes = json_decode($strJson, true);
-} else {
-    $aClientes = array();
-}
 
-$id = isset($_GET["id"])? $_GET["id"] : "";
+    $jsonClientes = file_get_contents("archivo.txt");
+    $aClientes = json_decode($jsonClientes, true);
 
-if(isset($_GET["do"]) && $_GET["do"] == "eliminar"){
+  } else {
 
-    if(file_exists("imagenes/" . $aClientes[$id]["imagen"])){
-        unlink("imagenes/" . $aClientes[$id]["imagen"]);     
+    $aClientes = [];
+
+  }
+  
+  $id = isset($_GET["id"])? $_GET["id"] : "";
+  
+  $aMensaje = ["mensaje" => "", "codigo" => ""];
+  
+  if(isset($_GET["do"]) && $_GET["do"] == "eliminar"){
+
+    if($aClientes[$id]["imagen"] != ""){
+
+      unlink("imagenes/" . $aClientes[$id]["imagen"]);
+
     }
 
+   unset($aClientes[$id]);
+   $jsonClientes = json_encode($aClientes);
+   file_put_contents("archivo.txt", $jsonClientes);
+   $id="";
+   $aMensaje = ["mensaje" => "Cliente eliminado correctamente", "codigo" => "danger"];
+   header("Refresh:2; url=index.php");
 
-    unset($aClientes[$id]);
-    $strJson = json_encode($aClientes);
-    file_put_contents("archivo.txt", $strJson);
-    header("refresh:2; url=index.php");
-}
-
-if($_POST){
+  }
+  
+  if($_POST){
+    
     $dni = trim($_POST["txtDni"]);
     $nombre = trim($_POST["txtNombre"]);
     $telefono = trim($_POST["txtTelefono"]);
     $correo = trim($_POST["txtCorreo"]);
-    $imagen = "";
-
+    $nombreImagen = "";
+  
     if($_FILES["archivo"]["error"] === UPLOAD_ERR_OK){
-        if(isset($aClientes[$id]["imagen"]) && $aClientes[$id]["imagen"] != ""){
-            if(file_exists("imagenes/" . $aClientes[$id]["imagen"])){
-                unlink("imagenes/" . $aClientes[$id]["imagen"]);
-            }
-            if ($_FILES["archivo"]["error"] != UPLOAD_ERR_OK) {
-                $imagen = "";
-            }
-        }
+
         $nombreAleatorio = date("Ymdhmsi");
         $archivo_tmp = $_FILES["archivo"]["tmp_name"];
         $nombreArchivo = $_FILES["archivo"]["name"];
         $extension = pathinfo($nombreArchivo, PATHINFO_EXTENSION);
-        $imagen = "$nombreAleatorio.$extension";
+        $nombreImagen = "$nombreAleatorio.$extension";
+        move_uploaded_file($archivo_tmp, "imagenes/$nombreImagen");
 
-        if($extension == "jpg" || $extension == "jpeg" || $extension == "png"){
-            move_uploaded_file($archivo_tmp, "imagenes/$imagen");
-        }        
-    } else {
+      }
+  
+      if(isset($_GET["id"])){
+  
+        $imagenAnterior = $aClientes[$id]["imagen"];
+  
+        if($_FILES["archivo"]["error"] === UPLOAD_ERR_OK){
+
+          if($imagenAnterior != ""){
+
+            unlink("imagenes/$imagenAnterior");
+
+          }
+
+        }  
         
-        if($id >= 0){
-            $imagen = $aClientes[$id]["imagen"];
-        } else {
-            $imagen = "";
+        if($_FILES["archivo"]["error"] !== UPLOAD_ERR_OK){
+
+          $nombreImagen = $imagenAnterior;
+
         }
-    }
+        
+        $aClientes[$id] = array(
+          "dni" => $dni,
+          "nombre" => $nombre,
+          "telefono" => $telefono,
+          "correo" => $correo,
+          "imagen" => $nombreImagen
+          );
 
-    if($id >= 0){
-        $aClientes[$id] = array("dni" => $dni,
-                            "nombre" => $nombre,
-                            "telefono" => $telefono,
-                            "correo" => $correo,
-                            "imagen" => $imagen);
-    } else {
-        $aClientes[] = array("dni" => $dni,
-                            "nombre" => $nombre,
-                            "telefono" => $telefono,
-                            "correo" => $correo,
-                            "imagen" => $imagen);
-    }
-    
-    $strJson = json_encode($aClientes);
-    file_put_contents("archivo.txt", $strJson);
+          $aMensaje = ["mensaje" => "Cliente modificado correctamente", "codigo" => "primary"];
+          header("Refresh:2; url=index.php");
+
+      } else {
+
+          $aClientes[] = array(
+          "dni" => $dni,
+          "nombre" => $nombre,
+          "telefono" => $telefono,
+          "correo" => $correo,
+          "imagen" => $nombreImagen
+          );
+
+          $aMensaje = ["mensaje" => "¡El cliente ha sido guardado correctamente!", "codigo" => "success"];
+          header("Refresh:2; url=index.php");
+
+      }    
+  
+    $jsonClientes = json_encode($aClientes);
+    file_put_contents("archivo.txt", $jsonClientes);
 }
-
+  
 ?>
 
 <!DOCTYPE html>
@@ -91,23 +118,19 @@ if($_POST){
 </head>
 <body>
     <main class="container">
-        <?php if($_POST){ ?>
-            <div class="alert alert-success d-flex align-items-center" role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                </svg>
-                    <div class="ps-2">¡Guardado con éxito!</div>
+
+    <?php if($aMensaje["mensaje"] != ""): ?>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-<?php echo $aMensaje["codigo"] ?>" role="alert">
+                <?php echo $aMensaje["mensaje"]; ?>
+                </div>
             </div>
-        <?php } ?>
-        <?php if(isset($_GET["do"]) && $_GET["do"] == "eliminar"){ ?>
-            <div class="alert alert-danger d-flex align-items-center" role="alert">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-            </svg>
-                    <div class="ps-2">Borrado correctamente.</div>
-            </div>
-        <?php } ?>
+        </div>
+
+    <?php endif ?>
+
         <div class="row">
             <div class="col-12 text-center my-5">
                 <h1>Registro de clientes</h1>
@@ -159,9 +182,8 @@ if($_POST){
                                 <td><?php echo $cliente["nombre"]; ?></td>
                                 <td><?php echo $cliente["correo"]; ?></td>
                                 <td>
-                                    <a href="?id=<?php echo $pos; ?>" data-toggle="tooltip" title="Editar"><i class="fa-solid fa-pen-to-square"></i></i></a>
+                                    <a href="?id=<?php echo $pos; ?>" data-toggle="tooltip" title="Editar"><i class="fa-solid fa-pen-to-square"></i></a>
                                     <a href="?id=<?php echo $pos; ?>&do=eliminar" data-toggle="tooltip" title="Eliminar"><i class="fa-solid fa-trash-can"></i></a>
-                                    <a href="index.php" data-toggle="tooltip" title="Confirmar cambios"><i class="fa-solid fa-check-double"></i></a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
