@@ -163,7 +163,7 @@ if(file_exists("archivo.txt")){
                     <div>
                         <button type="submit" name="btnGuardar" class="btn btn-primary my-2">Guardar</button>
                         <a href="index.php" class="btn btn-secondary my-2">Nuevo</a>
-                        <a href="archivo.txt" download class="btn btn-warning my-2">Descargar JSON</a>
+                        <a href="archivo.txt" download class="btn btn-warning my-2">Descargar .JSON</a>
                     </div>
                 </form>
             </div>
